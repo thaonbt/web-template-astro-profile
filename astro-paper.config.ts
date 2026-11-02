@@ -1,19 +1,13 @@
 import { defineAstroPaperConfig } from "./src/types/config";
 import { deploy } from "./deploy.config";
 
-const isGithub = process.env.GITHUB_ACTIONS === "true";
-
-const SITE_URL = isGithub
-  ? "https://<username>.github.io"
-  : "https://my-profile.workers.dev/";
-
 export default defineAstroPaperConfig({
   site: {
     url: deploy.siteUrl,
     title: "My Profile",
     description: "Description about the site.",
     author: "<Your Name>",
-    profile: "https://profile.<username>.workers.dev/",
+    profile: deploy.siteUrl,
     ogImage: "",
     lang: "en",
     timezone: "Asia/Bangkok",
