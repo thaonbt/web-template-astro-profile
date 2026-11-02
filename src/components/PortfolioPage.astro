@@ -1,0 +1,68 @@
+---
+import { getCollection } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import PortfolioList from "@/components/PortfolioList.astro";
+import PortfolioGrid from "@/components/PortfolioGrid.astro";
+import config from "@/config";
+
+type Props = { view: "list" | "grid" };
+const { view } = Astro.props;
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const projects = (await getCollection("portfolios")).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const views = [
+  { id: "list", label: "List" },
+  { id: "grid", label: "Grid" },
+] as const;
+---
+
+<Layout
+  title={`Portfolios | ${config.site.title}`}
+  description="Projects I have done."
+>
+  <Header />
+  <Breadcrumb />
+  <Main pageTitle="Portfolios">
+    <nav aria-label="Portfolio view" class="mb-6 flex justify-end">
+      <ul
+        class="border-border inline-flex overflow-hidden rounded-md border text-sm"
+      >
+        {
+          views.map(v => (
+            <li>
+              <a
+                href={getRelativeLocaleUrl(locale, `portfolios/${v.id}`)}
+                aria-current={view === v.id ? "page" : undefined}
+                class:list={[
+                  "block px-3 py-1 font-medium",
+                  view === v.id
+                    ? "bg-accent text-background"
+                    : "hover:text-accent",
+                ]}
+              >
+                {v.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    {
+      view === "grid" ? (
+        <PortfolioGrid projects={projects} locale={locale} />
+      ) : (
+        <PortfolioList projects={projects} locale={locale} />
+      )
+    }
+  </Main>
+  <Footer />
+</Layout>

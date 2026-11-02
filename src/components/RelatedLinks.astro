@@ -1,0 +1,54 @@
+---
+import { getEntries } from "astro:content";
+import { getPostUrl } from "@/utils/getPostPaths";
+import { useTranslations } from "@/i18n";
+import config from "@/config";
+
+interface Props {
+  links?: { title: string; url: string }[];
+  posts?: { collection: "posts"; id: string }[];
+}
+
+const { links = [], posts = [] } = Astro.props;
+const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
+
+// Filter drafts to avoid revealing unpublished articles
+const internal = (await getEntries(posts)).filter(p => !p.data.draft);
+const total = links.length + internal.length;
+---
+
+{
+  total > 0 && (
+    <details class="my-6 rounded border border-muted p-4">
+      <summary class="cursor-pointer font-semibold text-accent">
+        {t.post.labelRelated} ({total})
+      >
+      </summary>
+      <ul class="mt-3 list-disc space-y-1 ps-6">
+        {internal.map(p => (
+          <li>
+            <a
+              href={getPostUrl(p.id, p.filePath, locale)}
+              class="underline hover:text-accent"
+            >
+              {p.data.title}
+            </a>
+          </li>
+        ))}
+        {links.map(l => (
+          <li>
+            <a
+              href={l.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="underline hover:text-accent"
+            >
+              {l.title}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}

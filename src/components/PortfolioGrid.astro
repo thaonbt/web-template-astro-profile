@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import { Image } from "astro:assets";
+
+type Props = { projects: CollectionEntry<"portfolios">[]; locale: string };
+const { projects, locale } = Astro.props;
+---
+
+<ul class="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-4">
+  {
+    projects.map(({ id, data }) => (
+      <li class="group border-border bg-background hover:border-accent relative flex flex-col overflow-hidden rounded-lg border transition-colors">
+        {data.thumbnail && (
+          <Image
+            src={data.thumbnail}
+            alt=""
+            width={640}
+            height={360}
+            class="aspect-video w-full object-cover"
+          />
+        )}
+        <div class="flex flex-1 flex-col gap-2 p-4">
+          <h2 class="text-lg leading-snug font-semibold">
+            <a
+              href={getRelativeLocaleUrl(locale, `portfolios/${id}`)}
+              class="group-hover:text-accent after:absolute after:inset-0"
+            >
+              {data.title}
+            </a>
+          </h2>
+          <p class="line-clamp-3 text-sm">{data.description}</p>
+          <ul class="mt-auto flex flex-wrap gap-1.5 pt-2 text-xs">
+            {data.tags.map(tag => (
+              <li class="border-border rounded border px-1.5 py-0.5">{tag}</li>
+            ))}
+          </ul>
+        </div>
+      </li>
+    ))
+  }
+</ul>

@@ -1,0 +1,56 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+// import Breadcrumb from "@/components/Breadcrumb.astro";
+import BackButton from "@/components/BackButton.astro";
+import BackToTopButton from "@/components/BackToTopButton.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import Datetime from "@/components/Datetime.astro";
+import ReadingTime from "@/components/ReadingTime.astro";
+
+export async function getStaticPaths() {
+  const projects = await getCollection("portfolios");
+  return projects.map(project => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const { title, description, repo, demo, pubDatetime, modDatetime } = project.data;
+---
+
+<Layout title={`${title} | ${config.site.title}`} description={description}>
+  <Header />
+  <BackButton/>
+  <!-- <Breadcrumb /> -->
+  <Main pageTitle={title} class="app-prose">
+    {
+      (repo || demo) && (
+        <p class="flex gap-4 text-sm">
+          {repo && (
+            <a href={repo} target="_blank" rel="noopener noreferrer">
+              Repo
+            </a>
+          )}
+          {demo && (
+            <a href={demo} target="_blank" rel="noopener noreferrer">
+              Demo
+            </a>
+          )}
+        </p>
+      )
+    }
+    <div class="my-2 flex items-center gap-2">
+      <Datetime pubDatetime={pubDatetime} modDatetime={modDatetime} />
+      <ReadingTime body={project.body} size="lg" />
+    </div>
+    <Content />
+    <BackToTopButton/>
+  </Main>
+  <Footer />
+</Layout>

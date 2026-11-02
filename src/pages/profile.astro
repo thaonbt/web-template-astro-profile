@@ -1,0 +1,189 @@
+---
+// Profile page (view only). All content lives in src/data/profile.ts,
+// so a site built from this template only edits that file and avatar.png.
+import { Image } from "astro:assets";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Breadcrumb from "@/components/Breadcrumb.astro";
+import Main from "@/components/Main.astro";
+import Footer from "@/components/Footer.astro";
+import config from "@/config";
+import avatar from "@/assets/images/avatar.png";
+import {
+  pageMeta,
+  labels,
+  intro,
+  skills,
+  experiences,
+  sections,
+} from "@/data/profile";
+
+const locale = Astro.currentLocale ?? config.site.lang;
+---
+
+<Layout
+  title={`${pageMeta.title} | ${config.site.title}`}
+  description={pageMeta.description}
+>
+  <Header />
+
+  <Breadcrumb />
+
+  <Main pageTitle={pageMeta.title} pageDesc={pageMeta.description}>
+    <!-- SECTION 1: INTRO -->
+    <section
+      id="intro"
+      class="mb-12 flex flex-col items-center gap-6 sm:flex-row sm:items-start"
+    >
+      <div
+        class="border-accent/80 rounded-full border-2 border-dashed p-1 transition-transform duration-300 hover:scale-105"
+      >
+        <Image
+          src={avatar}
+          alt={intro.avatarAlt}
+          width={128}
+          height={128}
+          class="size-32 rounded-full object-cover grayscale transition-all duration-300 hover:grayscale-0"
+        />
+      </div>
+      <div class="flex-1 text-center sm:text-left">
+        <h2 class="text-accent text-2xl font-bold sm:text-3xl">
+          {intro.name}
+        </h2>
+        <p class="mt-2 font-medium">{intro.title}</p>
+        <p class="mt-3 leading-relaxed opacity-80">{intro.summary}</p>
+        <p class="mt-3 text-sm">
+          <a
+            href={getRelativeLocaleUrl(locale, "about")}
+            class="hover:text-accent underline decoration-dashed underline-offset-4"
+          >
+            {labels.aboutLink}
+          </a>
+        </p>
+      </div>
+    </section>
+
+    <hr class="border-border my-8" />
+
+    <!-- SECTION 2: SKILLS -->
+    <section id="skills" class="mb-12">
+      <h2 class="text-accent mb-6 text-xl font-bold">{labels.skills}</h2>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {
+          skills.map(group => (
+            <div class="border-border hover:border-accent rounded-lg border p-4 transition-colors">
+              <h3 class="text-accent mb-3 font-semibold">{group.category}</h3>
+              <ul class="flex flex-wrap gap-2">
+                {group.items.map(skill => (
+                  <li class="bg-muted border-border rounded border px-2.5 py-1 text-xs font-medium">
+                    {skill}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <hr class="border-border my-8" />
+
+    <!-- SECTION 3: EXPERIENCE (TIMELINE) -->
+    <section id="experience" class="mb-12">
+      <h2 class="text-accent mb-8 text-xl font-bold">{labels.experience}</h2>
+      <div class="border-accent space-y-8 border-s-2 ps-6 sm:ps-8">
+        {
+          experiences.map(exp => (
+            <div class="group relative">
+              <div class="bg-background border-accent group-hover:bg-accent absolute -start-[31px] top-1.5 size-3 rounded-full border-2 transition-colors sm:-start-[39px]" />
+              <div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                <h3 class="group-hover:text-accent text-lg font-semibold transition-colors">
+                  {exp.role}
+                </h3>
+                <span class="text-accent text-xs font-semibold tracking-wider whitespace-nowrap uppercase">
+                  {exp.period}
+                </span>
+              </div>
+              <p class="mb-2 text-sm font-medium opacity-75">{exp.company}</p>
+              <p class="text-sm leading-relaxed opacity-80">
+                {exp.description}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <hr class="border-border my-8" />
+
+    <!-- SECTION 4: HIGHLIGHTS AND CREDENTIALS (EXPANDABLE CARDS) -->
+    <section id="more">
+      <h2 class="text-accent mb-6 text-xl font-bold">{labels.more}</h2>
+      <div class="space-y-4">
+        {
+          sections.map(section => (
+            <details
+              id={section.id}
+              open={section.open}
+              class="profile-details group border-border hover:border-accent rounded-lg border p-4 transition-colors"
+            >
+              <summary class="focus-visible:outline-accent flex cursor-pointer list-none items-center justify-between gap-3 focus-visible:outline-2 focus-visible:outline-offset-4 [&::-webkit-details-marker]:hidden">
+                <span class="text-accent font-semibold">{section.title}</span>
+                <span class="flex items-center gap-3">
+                  <span class="bg-muted border-border rounded border px-2 py-0.5 text-xs font-medium">
+                    {section.items.length}
+                  </span>
+                  <svg
+                    class="size-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </span>
+              </summary>
+              <ul class="marker:text-accent mt-4 list-disc space-y-3 ps-5 text-sm leading-relaxed">
+                {section.items.map(item => (
+                  <li>
+                    <span class="opacity-90">{item.text}</span>
+                    {item.meta && (
+                      <span class="block text-xs opacity-70">{item.meta}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </Main>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* Progressive enhancement: animate open/close where the browser supports
+     ::details-content (Chromium). Elsewhere it simply snaps open or closed. */
+  @media (prefers-reduced-motion: no-preference) {
+    .profile-details {
+      interpolate-size: allow-keywords;
+    }
+    .profile-details::details-content {
+      block-size: 0;
+      overflow: hidden;
+      transition:
+        block-size 0.25s ease,
+        content-visibility 0.25s allow-discrete;
+    }
+    .profile-details[open]::details-content {
+      block-size: auto;
+    }
+  }
+</style>

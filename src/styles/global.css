@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "./theme.css";
+@import "./typography.css";
+@import "rehype-callouts/theme/obsidian";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer base {
+  * {
+    @apply border-border outline-accent/75;
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-muted) transparent;
+  }
+  a,
+  button,
+  #main-content {
+    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/*
+  Page width (max-w-app). Tailwind reference:
+    max-w-2xl     672px   narrow, focused reading
+    max-w-3xl     768px   AstroPaper default
+    max-w-4xl     896px   medium, suits the Portfolio grid
+    max-w-5xl     1024px  wide, large screens
+    max-w-[1100px] custom value
+*/
+@utility max-w-app {
+  @apply max-w-4xl;
+}
+
+@utility app-layout {
+  @apply max-w-app mx-auto w-full px-4 text-lg;
+}
+
+@utility active-nav {
+  @apply underline decoration-wavy decoration-2 underline-offset-8;
+}
+
+@utility app-layout {
+  @apply max-w-app mx-auto w-full px-4 text-(length:--fs-content);
+}
+
+:target {
+  scroll-margin-block: 1rem;
+}
+
+
+/* ===== Mermaid: Theme colors + 4 roles (Okabe-Ito) ===== */
+.mermaid {
+  /* Neutral: derived from AstroPaper's token */
+  --dg-fill: color-mix(in oklab, var(--foreground) 6%, var(--background));
+  --dg-stroke: color-mix(in oklab, var(--foreground) 55%, var(--background));
+  --dg-text: var(--foreground);
+
+  /* Role: light background + bold border, text always uses --dg-text */
+  --dg-primary-fill: #d6e9f8;  --dg-primary-stroke: #0072b2; /* xanh dương */
+  --dg-data-fill:    #d3efe5;  --dg-data-stroke:    #007a59; /* xanh lục */
+  --dg-ext-fill:     #fbeccb;  --dg-ext-stroke:     #a86b00; /* cam */
+  --dg-risk-fill:    #f8dcc8;  --dg-risk-stroke:    #b34a00; /* đỏ cam */
+}
+
+[data-theme="dark"] .mermaid {
+  --dg-primary-fill: #123049;  --dg-primary-stroke: #56b4e9;
+  --dg-data-fill:    #0d3b30;  --dg-data-stroke:    #35c49c;
+  --dg-ext-fill:     #45310a;  --dg-ext-stroke:     #e69f00;
+  --dg-risk-fill:    #47200a;  --dg-risk-stroke:    #f0894a;
+}
+
+/* !important because Mermaids have a unique <style> with high specificity */
+.mermaid .node :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-fill) !important;
+  stroke: var(--dg-stroke) !important;
+}
+.mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid text {
+  color: var(--dg-text) !important;
+  fill: var(--dg-text) !important;
+}
+.mermaid .edgeLabel { background-color: var(--background) !important; }
+.mermaid :is(.flowchart-link, .edgePath path) {
+  stroke: var(--dg-stroke) !important;
+}
+.mermaid marker path {
+  fill: var(--dg-stroke) !important;
+  stroke: var(--dg-stroke) !important;
+}
+
+.mermaid .node.primary :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-primary-fill) !important; stroke: var(--dg-primary-stroke) !important;
+}
+.mermaid .node.data :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-data-fill) !important; stroke: var(--dg-data-stroke) !important;
+}
+.mermaid .node.ext :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-ext-fill) !important; stroke: var(--dg-ext-stroke) !important;
+  stroke-dasharray: 5 3; /* Dotted lines: distinguish by shape, not just by color. */
+}
+.mermaid .node.risk :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-risk-fill) !important; stroke: var(--dg-risk-stroke) !important;
+  stroke-width: 2.5px !important;
+}
+
+.mermaid .node.default:not(.primary):not(.data):not(.ext):not(.risk) :is(rect, polygon, path, circle, ellipse) {
+  fill: var(--dg-fill) !important;
+  stroke: var(--dg-stroke) !important;
+}
+
+/* Sequence diagram: using a common neutral color palette + primary color for the actor. */
+.mermaid rect.actor {
+  fill: var(--dg-primary-fill) !important;
+  stroke: var(--dg-primary-stroke) !important;
+}
+.mermaid :is(text.actor, text.actor > tspan, .messageText, .loopText, .labelText, .noteText) {
+  fill: var(--dg-text) !important;
+  stroke: none !important;
+}
+.mermaid :is(.actor-line, .messageLine0, .messageLine1, .loopLine) {
+  stroke: var(--dg-stroke) !important;
+}
+.mermaid .note {
+  fill: var(--dg-ext-fill) !important;
+  stroke: var(--dg-ext-stroke) !important;
+}
+.mermaid .labelBox {
+  fill: var(--dg-fill) !important;
+  stroke: var(--dg-stroke) !important;
+}
+.mermaid :is(#arrowhead path, #crosshead path, #sequencenumber) {
+  fill: var(--dg-stroke) !important;
+}
+
+/* Callouts: follow the same body rhythm as the rest of the article */
+.app-prose .callout,
+.app-prose .callout-content,
+.app-prose .callout-content :is(p, li) {
+  line-height: var(--lh-body);
+}
+
+.app-prose .callout-title {
+  line-height: var(--lh-heading);
+}
+
+.app-prose .callout-content > :last-child { margin-bottom: 0; }
+
+/* h1 inside prose: match the page-title style used on the Posts page */
+.app-prose h1 {
+  @apply text-accent text-2xl font-bold sm:text-3xl;
+}

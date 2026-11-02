@@ -1,0 +1,34 @@
+---
+import IconClock from "@/assets/icons/IconClock.svg";
+import { getReadingTime } from "@/utils/readingTime";
+import { useTranslations } from "@/i18n";
+
+type Props = {
+  class?: string;
+  size?: "sm" | "lg";
+  body?: string;
+};
+
+const { body, size = "sm", class: className = "" } = Astro.props;
+
+const t = useTranslations(Astro.currentLocale);
+const minutes = getReadingTime(body);
+const label = `${minutes} ${t.post.readingTime}`;
+---
+
+<div
+  class:list={["text-muted-foreground flex items-center gap-x-2", className]}
+  title="Estimated reading time"
+  aria-label={label}
+>
+  <IconClock
+    class:list={[
+      "inline-block size-6 min-w-5.5",
+      { "scale-90": size === "sm" },
+    ]}
+    aria-hidden="true"
+  />
+  <span class:list={["text-sm", { "sm:text-base": size === "lg" }]}>
+    {label}
+  </span>
+</div>
