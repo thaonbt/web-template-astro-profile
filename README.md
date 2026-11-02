@@ -2,7 +2,12 @@
 
 Astro template for a personal site: profile, portfolio and blog/knowledge-base. Based on [AstroPaper](https://github.com/satnaing/astro-paper) by Sat Naing (MIT) and extended with a Profile page, a Portfolios section, related-post links and Mermaid diagrams.
 
-Deployment target: **Cloudflare Workers (static assets)**. The site is fully static and needs no Astro adapter.
+Deployment targets:
+
+- **Cloudflare Workers (static assets)**: the target for every site created from this template.
+- **GitHub Pages**: used only by this template repo itself, as a live demo at <https://thaonbt.github.io/web-template-astro-profile/>.
+
+The site is fully static and needs no Astro adapter. One codebase builds for both targets: see [`site` and `base`](#site-and-base).
 
 > Looking for the lighter base template that deploys on GitHub Pages? See [web-template-astro](https://github.com/thaonbt/web-template-astro).
 
@@ -240,20 +245,34 @@ To change colors, edit the `--dg-*` variables in `.mermaid` (light) and `[data-t
    - Posts: add markdown files to `src/content/posts/` (only `.gitkeep` in this template)
    - Notes link: the `href` in `src/components/Header.astro`
 5. Set `name` in `wrangler.jsonc` to your own Worker name.
-6. Remove what you do not need:
+6. Set `CLOUDFLARE_URL` in `deploy.config.ts` to your final Cloudflare URL (see [`site` and `base`](#site-and-base)).
+7. Optional: delete `.github/workflows/deploy-github-pages.yml`. It only runs in the template repo itself, so in your repo its jobs are skipped.
+8. Remove what you do not need:
    - To drop a page (for example Portfolios), delete its files under `src/pages/` and `src/content/`, remove the collection from `src/content.config.ts` and its entry from the menu in `src/components/Header.astro` (labels are in `src/i18n/lang/en.ts`).
    - To drop Mermaid, remove `src/scripts/mermaid.ts`, its import in `Layout.astro`, the Mermaid block in `src/styles/global.css` and the `excludeLangs` option in `astro.config.ts`, then run `pnpm remove mermaid`.
 
 ## `site` and `base`
 
-The site is served at the root of its domain on Cloudflare, so:
+The two targets need different values: Cloudflare serves the site at the root of its domain, while GitHub Pages serves a project repo at `https://<owner>.github.io/<repo>/`.
 
-| Setting | File | Value |
-| ------- | ---- | ----- |
-| `site` | `astro.config.ts` (read from `astro-paper.config.ts` `site.url`) | Your final URL, for example `https://my-site.workers.dev/` |
-| `base` | `astro.config.ts` | `/` (or leave it out) |
+| Target | `site.url` | `base` |
+| ------ | ---------- | ------ |
+| Cloudflare Workers or custom domain | Your final URL (e.g. the `workers.dev` URL) | `/` |
+| GitHub Pages (project repo) | `https://<owner>.github.io/` | `/<repo>` |
+| GitHub Pages (user repo `<owner>.github.io`) | `https://<owner>.github.io/` | `/` |
 
-Keep `base` a fixed string and do not make it depend on `NODE_ENV`, which is `production` for every build. If you later serve the site under a sub-path, set `base` to that path and build internal links with `getRelativeLocaleUrl` (from `astro:i18n`) and `getAssetPath` (from `src/utils/withBase.ts`) instead of hardcoded paths.
+Both values come from one file, `deploy.config.ts`, so they cannot drift apart:
+
+- `astro-paper.config.ts` uses `deploy.siteUrl` for `site.url`
+- `astro.config.ts` uses `deploy.base` for `base`
+
+The target is chosen by the `DEPLOY_TARGET` environment variable. Only `.github/workflows/deploy-github-pages.yml` sets it (to `github`). Cloudflare builds and local machines leave it unset, so they use the Cloudflare values.
+
+Do not use `GITHUB_ACTIONS` or `NODE_ENV` for this: GitHub Actions sets `GITHUB_ACTIONS=true` in every workflow (including one that deploys to Cloudflare) and `NODE_ENV` is `production` in every build.
+
+**Your only edit** is `CLOUDFLARE_URL` at the top of `deploy.config.ts`. The GitHub values are derived from `GITHUB_REPOSITORY` (`owner/repo`) automatically.
+
+Whenever `base` is not `/`, every internal link must include the prefix. Use `getRelativeLocaleUrl` (from `astro:i18n`) for pages and `getAssetPath` (from `src/utils/withBase.ts`) for files instead of hardcoded paths.
 
 ## Commands
 
@@ -276,6 +295,19 @@ Search only works after `pnpm build`. In dev mode the search index may be empty.
 pnpm install --frozen-lockfile
 rm -rf dist .astro && pnpm build
 grep -o 'href="[^"]*css"' dist/index.html   # must start with /_astro/
+```
+
+### Verify both targets locally
+
+```bash
+# Cloudflare configuration (default)
+rm -rf dist .astro && pnpm build
+grep -o 'href="[^"]*css"' dist/index.html   # must start with /_astro/
+
+# Simulate the GitHub Pages build
+rm -rf dist .astro && DEPLOY_TARGET=github GITHUB_REPOSITORY=your-username/your-repo pnpm build
+grep -o 'href="[^"]*css"' dist/index.html   # must start with /your-repo/_astro/
+pnpm preview                                # then click through the site under /your-repo/
 ```
 
 ### Docker (optional)
@@ -307,13 +339,33 @@ The site is static, so it is served as Workers static assets. No Astro adapter i
 ```
 
 4. If the build picks an older pnpm, set the environment variable `PNPM_VERSION` to the version in `packageManager`.
-5. Make sure `site.url` equals the final URL.
+5. Make sure `CLOUDFLARE_URL` in `deploy.config.ts` equals the final URL.
+
+## Deploy to GitHub Pages (template repo only)
+
+This is how the live demo of the template is published. Repos created from the template do not need it.
+
+1. Mark the repo as a template: **Settings > General > Template repository**, or:
+
+   ```bash
+   gh repo edit <owner>/<repo> --template
+   ```
+
+2. Enable Pages with GitHub Actions as the source: **Settings > Pages > Source: GitHub Actions**, or:
+
+   ```bash
+   gh api -X POST repos/<owner>/<repo>/pages -f build_type=workflow
+   ```
+
+3. Push to `main`. `.github/workflows/deploy-github-pages.yml` builds with `DEPLOY_TARGET=github` and publishes `dist/`.
+
+The workflow jobs have `if: github.event.repository.is_template`, so they run only while "Template repository" is enabled. A repo created from the template is a normal repo: its jobs show as skipped and Cloudflare deploys it. GitHub Pages on a **private** repo needs a paid GitHub plan, which is another reason to keep the Pages deployment in the public template repo only.
 
 ## Common pitfalls
 
 **Build and setup**
 
-- **`[config] Invalid URL` during `astro check`:** `site.url` in `astro-paper.config.ts` is not a full URL (for example a placeholder like `[Your site URL]` or a missing `https://`). Use `https://<your-worker>.workers.dev/`.
+- **`[config] Invalid URL` during `astro check`:** `CLOUDFLARE_URL` in `deploy.config.ts` is not a full URL (for example a placeholder like `[Your site URL]` or a missing `https://`). Use `https://<your-worker>.workers.dev/`.
 - **`npm ci` or `npm install` misbehaves:** the repo is pnpm-only. Use `pnpm install --frozen-lockfile`. Keep only `pnpm-lock.yaml`, because CI picks the package manager from the lockfile.
 - **Build fails offline or behind a proxy:** the build downloads the Google Sans Code font (code blocks and OG images). Without access to Google Fonts, `pnpm build` stops with `Cannot find the font path`.
 - **Build fails with "Missing content entry":** `src/content/pages/about.md` was renamed or deleted.
@@ -325,6 +377,15 @@ The site is static, so it is served as Workers static assets. No Astro adapter i
 - **Deploy fails with `ERR_PNPM_IGNORED_BUILDS: workerd`:** `wrangler.jsonc` is missing, so Wrangler runs autoconfig and installs extra packages. Add the config file above.
 - **`No URLs enabled`:** enable `workers.dev` under Settings > Domains & Routes or set `workers_dev: true`.
 - **`Failed to match Worker name`:** the `name` in `wrangler.jsonc` differs from the Worker name in the dashboard. Make them identical.
+
+**GitHub Pages**
+
+- **The deploy workflow is skipped:** "Template repository" is not enabled, or you are in a repo created from the template (expected there). Enable it with `gh repo edit <owner>/<repo> --template`.
+- **Deploy fails with `HttpError: Not Found`:** Pages is not enabled. Set **Settings > Pages > Source** to **GitHub Actions**.
+- **Pages site has no styles and links give 404:** `base` is `/` in a GitHub build. Check that `deploy.config.ts` is used by `astro.config.ts`, and that internal links use `getRelativeLocaleUrl` and `getAssetPath` instead of hardcoded paths.
+- **Cloudflare site has no styles and links point to `/<repo>/...`:** `DEPLOY_TARGET=github` is set in the Cloudflare build (workflow or dashboard variables). Remove it there.
+- **The build step fails to find pnpm or the right version:** `packageManager` is missing from `package.json`. Pin it to the pnpm version you use.
+- **A second workflow also deploys to GitHub Pages:** keep only `deploy-github-pages.yml`. Cloudflare is deployed by its own Git integration, so it needs no workflow.
 
 **Content**
 

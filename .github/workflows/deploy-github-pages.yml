@@ -1,0 +1,48 @@
+# Deploys the static site to GitHub Pages.
+#
+# This workflow only runs in the public template repo itself (live demo).
+# Repos created from the template are NOT marked as templates, so every job is skipped there.
+# Those repos are deployed to Cloudflare Workers (Git integration in the Cloudflare dashboard).
+name: Deploy Astro site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: only what the Pages deployment needs
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two deployments at the same time
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # `is_template` is true only when "Template repository" is enabled in the repo settings
+    if: github.event.repository.is_template
+    runs-on: ubuntu-latest
+    env:
+      # Makes deploy.config.ts use the GitHub Pages site URL and base path
+      DEPLOY_TARGET: github
+    steps:
+      - name: Checkout your repository using git
+        uses: actions/checkout@v7
+      - name: Install, build, and upload your site
+        uses: withastro/action@v6
+
+  deploy:
+    if: github.event.repository.is_template
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

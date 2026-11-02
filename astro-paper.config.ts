@@ -1,4 +1,5 @@
 import { defineAstroPaperConfig } from "./src/types/config";
+import { deploy } from "./deploy.config";
 
 const isGithub = process.env.GITHUB_ACTIONS === "true";
 
@@ -8,7 +9,7 @@ const SITE_URL = isGithub
 
 export default defineAstroPaperConfig({
   site: {
-    url: SITE_URL,
+    url: deploy.siteUrl,
     title: "My Profile",
     description: "Description about the site.",
     author: "<Your Name>",
